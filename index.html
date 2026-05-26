@@ -291,8 +291,74 @@
       Eine Veranstaltung von und für ehemalige Mitarbeitende.<br>
       Kein offizieller SRF- oder C-FILMS-Event.
     </p>
+    <div class="footer-links">
+      <button class="footer-link-btn" id="btn-impressum">Impressum</button>
+      <span class="footer-separator">•</span>
+      <button class="footer-link-btn" id="btn-datenschutz">Datenschutzerklärung</button>
+    </div>
   </footer>
 
-  <script src="script.js?v=5"></script>
+  <!-- =============================================
+       MODALS (LEGAL)
+       ============================================= -->
+  <div class="modal-overlay" id="modal-impressum" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Schliessen">&times;</button>
+      <div class="modal-body">
+        <h2>Impressum</h2>
+        <p><strong>Verantwortlich für diese Website:</strong></p>
+        <p>
+          Organisationsteam Lüthi und Blanc Revival Party<br>
+          c/o Thierry Pool<br>
+          Zürich, Schweiz
+        </p>
+        <p><strong>Vertretungsberechtigte Personen:</strong></p>
+        <ul>
+          <li>Carla Hohmeister</li>
+          <li>Janine Wille</li>
+          <li>Thierry Pool</li>
+        </ul>
+        <p><strong>Kontakt:</strong></p>
+        <p>
+          E-Mail: <span class="placeholder-email">[Bitte füge deine E-Mail-Adresse hier ein, z.B. info@lb-revival.ch]</span>
+        </p>
+        <p><strong>Haftungsausschluss:</strong></p>
+        <p>
+          Diese Website dient ausschliesslich der privaten Organisation des Revival-Events für ehemalige Mitarbeitende. Es handelt sich um keine offizielle Veranstaltung des Schweizer Radio und Fernsehens (SRF) oder der C-FILMS AG.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-datenschutz" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Schliessen">&times;</button>
+      <div class="modal-body">
+        <h2>Datenschutzerklärung</h2>
+        <p>Verantwortliche Stelle im Sinne der Schweizerischen Datenschutzgesetzgebung (DSG) ist das im Impressum genannte Organisationsteam.</p>
+        
+        <h3>1. Erhobene Daten und Verwendungszweck</h3>
+        <p>Wenn du das Anmeldeformular auf unserer Website ausfüllst, erheben wir folgende personenbezogene Daten:</p>
+        <ul>
+          <li>Name / Vorname</li>
+          <li>E-Mail-Adresse</li>
+          <li>Ehemalige Abteilung (z.B. Cast, Kamera, Regie)</li>
+        </ul>
+        <p>Wir verwenden diese Daten ausschliesslich, um deine Anmeldung zur Lüthi und Blanc Revival Party zu erfassen, dich über Event-Details zu informieren und Gästelisten zu erstellen.</p>
+
+        <h3>2. Datenweitergabe und Speicherung (Google Drive / Sheets)</h3>
+        <p>Deine Daten werden verschlüsselt (per HTTPS) an ein Google Apps Script übermittelt und in einer privaten Google-Tabelle (Google Sheets) gespeichert. Die Server von Google LLC befinden sich teilweise in den USA. Die Übermittlung erfolgt auf Grundlage der EU-Standardvertragsklauseln zur Gewährleistung eines angemessenen Datenschutzniveaus.</p>
+        <p>Es findet keine Weitergabe deiner Daten an unbefugte Dritte statt.</p>
+
+        <h3>3. Datensicherheit</h3>
+        <p>Zum Schutz deiner übertragenen Daten nutzen wir eine SSL/TLS-Verschlüsselung (HTTPS). Du erkennst eine verschlüsselte Verbindung an dem Schloss-Symbol in der Adresszeile deines Browsers.</p>
+
+        <h3>4. Deine Rechte</h3>
+        <p>Du hast jederzeit das Recht auf kostenlose Auskunft über deine bei uns gespeicherten Daten sowie ein Recht auf Berichtigung, Sperrung oder Löschung dieser Daten. Bitte kontaktiere uns dazu über die im Impressum angegebene E-Mail-Adresse.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js?v=6"></script>
 </body>
 </html>
