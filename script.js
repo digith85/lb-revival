@@ -362,4 +362,55 @@
     });
   });
 
+  // ============================================
+  // LEGAL MODALS (IMPRESSUM & DATENSCHUTZ)
+  // ============================================
+  const btnImpressum = document.getElementById('btn-impressum');
+  const btnDatenschutz = document.getElementById('btn-datenschutz');
+  const modalImpressum = document.getElementById('modal-impressum');
+  const modalDatenschutz = document.getElementById('modal-datenschutz');
+  const closeButtons = document.querySelectorAll('.modal-close');
+  const overlays = document.querySelectorAll('.modal-overlay');
+
+  function openModal(modal) {
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  }
+
+  function closeModal(modal) {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = ''; // Restore scrolling
+  }
+
+  btnImpressum.addEventListener('click', () => openModal(modalImpressum));
+  btnDatenschutz.addEventListener('click', () => openModal(modalDatenschutz));
+
+  closeButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const modal = e.target.closest('.modal-overlay');
+      closeModal(modal);
+    });
+  });
+
+  // Close modal when clicking outside of modal content
+  overlays.forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeModal(overlay);
+      }
+    });
+  });
+
+  // Close modal on Escape key press
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModal = document.querySelector('.modal-overlay.active');
+      if (activeModal) {
+        closeModal(activeModal);
+      }
+    }
+  });
+
 })();
