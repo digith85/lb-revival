@@ -1055,6 +1055,97 @@ body {
   font-style: italic;
 }
 
+/* Legal intro paragraph */
+.legal-intro {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  border-left: 2px solid var(--color-glass-border);
+  padding-left: 14px;
+  margin-bottom: 28px;
+  line-height: 1.7;
+}
+
+/* Impressum info blocks (label + value rows) */
+.legal-block {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  align-items: start;
+}
+
+.legal-block:last-child {
+  border-bottom: none;
+}
+
+.legal-block-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding-top: 2px;
+}
+
+.legal-block-value {
+  font-size: 0.9rem;
+  color: var(--color-text-silver);
+  line-height: 1.7;
+}
+
+/* Datenschutz numbered sections */
+.legal-section {
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.legal-section:last-child {
+  border-bottom: none;
+}
+
+.legal-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-white);
+  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+}
+
+.legal-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  font-family: var(--font-heading);
+  flex-shrink: 0;
+}
+
+/* Styled links inside modals */
+.legal-link {
+  color: var(--color-text-silver);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-smooth);
+}
+
+.legal-link:hover {
+  color: var(--color-text-white);
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
