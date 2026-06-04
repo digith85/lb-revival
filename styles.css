@@ -621,6 +621,11 @@ body {
   cursor: pointer;
 }
 
+.form-group select option {
+  background: #1a1a2e;
+  color: #ffffff;
+}
+
 .form-group input::placeholder {
   color: var(--color-text-muted);
 }
