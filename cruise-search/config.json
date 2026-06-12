@@ -1,0 +1,67 @@
+{
+  "_comment": "Cruise Fare Monitor — Celebrity · Royal Caribbean · Silversea (alle Captain's Club / Crown & Anchor / Venetian Society)",
+
+  "cruise_lines": ["celebrity", "royal_caribbean", "silversea"],
+  "_cruise_lines_note": "Alle drei sind RCL-Marken mit gegenseitigem Status-Matching. celebrity=Captain's Club, royal_caribbean=Crown&Anchor, silversea=Venetian Society",
+
+  "passengers": {
+    "adults": 2,
+    "children": [
+      {"dob": "2025-10-25", "label": "Kind"}
+    ]
+  },
+
+  "cabin": {
+    "min_category": "BALCONY",
+    "_note": "Erlaubte Werte (aufsteigend): INTERIOR, OCEANVIEW, BALCONY, AQUA_CLASS, SKY_SUITE, CELEBRITY_SUITE, PENTHOUSE_SUITE"
+  },
+
+  "internet": {
+    "require_fast": true,
+    "_note": "true = nur Tarife mit Stream/Premium-Internet (nicht nur Surf/Basic)"
+  },
+
+  "search": {
+    "departure_date_from": "2026-05-01",
+    "departure_date_to": "2027-12-31",
+    "_note_min_age": "Kind muss mind. 6 Monate alt sein (born 2025-10-25 → frühest 2026-04-25)",
+    "min_duration_nights": 3,
+    "max_duration_nights": 21,
+    "destinations": ["all"],
+    "_destinations_note": "z.B. ['CARIBBEAN', 'MEDITERRANEAN', 'NORTHERN_EUROPE', 'all']"
+  },
+
+  "budget": {
+    "max_total_eur": 9999,
+    "_note": "Gesamtpreis für alle Passagiere. 0 = kein Limit"
+  },
+
+  "schedule": {
+    "interval_minutes": 60,
+    "run_on_start": true
+  },
+
+  "notification": {
+    "email": {
+      "enabled": false,
+      "smtp_host": "smtp.gmail.com",
+      "smtp_port": 587,
+      "use_tls": true,
+      "username": "",
+      "password": "",
+      "from": "",
+      "to": ""
+    },
+    "console": true,
+    "results_file": "found_fares.json"
+  },
+
+  "scraper": {
+    "headless": true,
+    "timeout_seconds": 60,
+    "wait_after_load_seconds": 5,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "log_all_api_calls": false,
+    "_log_note": "true = alle intercepted API-Calls loggen (nützlich zum Debuggen)"
+  }
+}

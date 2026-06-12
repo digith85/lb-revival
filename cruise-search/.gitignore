@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+found_fares.json
+cruise_search.log
