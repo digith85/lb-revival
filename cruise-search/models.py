@@ -66,9 +66,16 @@ class CruiseFare:
     def id(self) -> str:
         return f"{self.ship}|{self.departure_date}|{self.cabin_type}|{self.price_per_person_eur}"
 
+    @property
+    def price_per_night_eur(self) -> float:
+        if self.duration_nights > 0:
+            return self.total_price_eur / self.duration_nights
+        return 0.0
+
     def to_dict(self) -> dict:
         d = asdict(self)
         d.pop("raw", None)
+        d["price_per_night_eur"] = round(self.price_per_night_eur, 2)
         return d
 
     def summary(self) -> str:
@@ -78,6 +85,7 @@ class CruiseFare:
             else ("Internet: enthalten" if self.internet_included else "Internet: NICHT enthalten")
         )
         ai_note = " | All Inclusive" if self.all_inclusive else ""
+        per_night = f"  ({self.price_per_night_eur:.0f} EUR/Nacht)" if self.duration_nights > 0 else ""
         return (
             f"{'=' * 60}\n"
             f"  Schiff    : {self.ship}\n"
@@ -85,7 +93,7 @@ class CruiseFare:
             f"  Abfahrt   : {self.departure_date}  ({self.duration_nights} Naechte)\n"
             f"  Kabine    : {self.cabin_type}{ai_note}\n"
             f"  Preis     : {self.price_per_person_eur:.0f} EUR/Person  "
-            f"(Total: {self.total_price_eur:.0f} EUR)\n"
+            f"| Total: {self.total_price_eur:.0f} EUR{per_night}\n"
             f"  {internet_note}\n"
             f"  Captains Club: {'JA' if self.captains_club_eligible else 'NEIN'}\n"
             f"  URL       : {self.booking_url}\n"

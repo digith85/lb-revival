@@ -143,6 +143,26 @@ class CelebrityScraper:
         self.wait_extra: float = float(cfg["scraper"].get("wait_after_load_seconds", 5))
         self.user_agent: str = cfg["scraper"].get("user_agent", "")
         self.log_all: bool = cfg["scraper"].get("log_all_api_calls", False)
+        self.executable_path: Optional[str] = cfg["scraper"].get("chromium_executable_path") or self._find_chromium()
+
+    @staticmethod
+    def _find_chromium() -> Optional[str]:
+        """Auto-detect a usable Chromium binary."""
+        import glob as _glob
+        import shutil
+        for pattern in [
+            "/opt/pw-browsers/chromium-*/chrome-linux/chrome",
+            "/opt/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
+        ]:
+            hits = sorted(_glob.glob(pattern), reverse=True)
+            if hits:
+                logger.debug(f"Auto-detected Chromium: {hits[0]}")
+                return hits[0]
+        for name in ("chromium", "chromium-browser", "google-chrome", "google-chrome-stable"):
+            path = shutil.which(name)
+            if path:
+                return path
+        return None
 
     # ------------------------------------------------------------------
     # Public interface
@@ -151,16 +171,23 @@ class CelebrityScraper:
     async def fetch_fares(self) -> list[CruiseFare]:
         captured: list[dict] = []
 
+        if not self.executable_path:
+            logger.error("Kein Chromium gefunden. Bitte 'playwright install chromium' ausführen.")
+            return []
+
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(
                 headless=self.headless,
-                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+                executable_path=self.executable_path,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                      "--ignore-certificate-errors"],
             )
             ctx = await browser.new_context(
                 locale="de-DE",
                 user_agent=self.user_agent or None,
                 viewport={"width": 1440, "height": 900},
                 extra_http_headers={"Accept-Language": "de-DE,de;q=0.9"},
+                ignore_https_errors=True,
             )
             page = await ctx.new_page()
 
@@ -350,16 +377,23 @@ class RoyalCaribbeanScraper(CelebrityScraper):
     async def fetch_fares(self) -> list[CruiseFare]:
         captured: list[dict] = []
 
+        if not self.executable_path:
+            logger.error("[RC] Kein Chromium gefunden.")
+            return []
+
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(
                 headless=self.headless,
-                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+                executable_path=self.executable_path,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                      "--ignore-certificate-errors"],
             )
             ctx = await browser.new_context(
                 locale="de-DE",
                 user_agent=self.user_agent or None,
                 viewport={"width": 1440, "height": 900},
                 extra_http_headers={"Accept-Language": "de-DE,de;q=0.9"},
+                ignore_https_errors=True,
             )
             page = await ctx.new_page()
 
@@ -427,16 +461,23 @@ class SilverseaScraper(CelebrityScraper):
     async def fetch_fares(self) -> list[CruiseFare]:
         captured: list[dict] = []
 
+        if not self.executable_path:
+            logger.error("[SS] Kein Chromium gefunden.")
+            return []
+
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(
                 headless=self.headless,
-                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+                executable_path=self.executable_path,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                      "--ignore-certificate-errors"],
             )
             ctx = await browser.new_context(
                 locale="de-DE",
                 user_agent=self.user_agent or None,
                 viewport={"width": 1440, "height": 900},
                 extra_http_headers={"Accept-Language": "de-DE,de;q=0.9"},
+                ignore_https_errors=True,
             )
             page = await ctx.new_page()
 
