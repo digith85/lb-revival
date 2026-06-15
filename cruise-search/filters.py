@@ -72,11 +72,12 @@ class FareFilter:
                     f"Kind zu jung: {child_age_months:.1f} Monate (mind. {required_months} benötigt)"
                 )
 
-        # --- Duration ---
-        if fare.duration_nights < self.min_nights:
-            rejections.append(f"Zu kurz: {fare.duration_nights} Nächte (min {self.min_nights})")
-        if fare.duration_nights > self.max_nights:
-            rejections.append(f"Zu lang: {fare.duration_nights} Nächte (max {self.max_nights})")
+        # --- Duration (skip check if duration unknown) ---
+        if fare.duration_nights > 0:
+            if fare.duration_nights < self.min_nights:
+                rejections.append(f"Zu kurz: {fare.duration_nights} Nächte (min {self.min_nights})")
+            if fare.duration_nights > self.max_nights:
+                rejections.append(f"Zu lang: {fare.duration_nights} Nächte (max {self.max_nights})")
 
         # --- Budget ---
         if self.max_total > 0 and fare.total_price_eur > self.max_total:

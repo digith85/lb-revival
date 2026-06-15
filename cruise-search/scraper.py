@@ -296,6 +296,19 @@ class CelebrityScraper:
         return fares
 
     def _try_parse(self, body, url: str) -> list[CruiseFare]:
+        # Algolia search response (Silversea uses this)
+        if isinstance(body, dict) and "results" in body:
+            results = body["results"]
+            if isinstance(results, list) and results and "hits" in results[0]:
+                fares = []
+                for result in results:
+                    for hit in result.get("hits", []):
+                        f = self._parse_algolia_hit(hit, url)
+                        if f:
+                            fares.append(f)
+                if fares:
+                    return fares
+
         if isinstance(body, list):
             return [f for item in body for f in [self._parse_item(item, url)] if f]
 
@@ -305,11 +318,68 @@ class CelebrityScraper:
                 sub = body.get(key)
                 if isinstance(sub, list):
                     return [f for item in sub for f in [self._parse_item(item, url)] if f]
-            # Maybe the dict IS a single cruise
             single = self._parse_item(body, url)
             return [single] if single else []
 
         return []
+
+    def _parse_algolia_hit(self, hit: dict, source_url: str) -> Optional[CruiseFare]:
+        """Parse a Silversea Algolia search hit."""
+        if not isinstance(hit, dict):
+            return None
+        try:
+            ship = (hit.get("shipName") or hit.get("ship") or
+                    hit.get("vessel") or "Silver Ship")
+            itinerary = (hit.get("voyageName") or hit.get("name") or
+                         hit.get("itinerary") or hit.get("title") or "Silversea Voyage")
+            dep_raw = (hit.get("departureDate") or hit.get("embarkationDate") or
+                       hit.get("startDate") or hit.get("departure") or "")
+            departure_date = _parse_date(dep_raw)
+
+            nights = int(hit.get("duration") or hit.get("nights") or
+                         hit.get("numNights") or hit.get("durationInDays") or 0)
+
+            # Silversea prices — typically nested
+            price_pp = 0.0
+            prices = hit.get("prices") or hit.get("fares") or hit.get("price") or {}
+            if isinstance(prices, list) and prices:
+                price_pp = _parse_price(prices[0])
+            elif isinstance(prices, dict):
+                price_pp = _parse_price(prices.get("amount") or prices.get("EUR") or prices.get("value") or 0)
+            elif isinstance(prices, (int, float)):
+                price_pp = float(prices)
+            if price_pp == 0:
+                price_pp = _parse_price(hit.get("lowestPrice") or hit.get("fromPrice") or 0)
+
+            cabin_raw = str(hit.get("suiteCategory") or hit.get("suiteType") or
+                            hit.get("cabin") or hit.get("category") or "VERANDA_SUITE")
+            cabin_type = _normalise_cabin(cabin_raw)
+
+            # Silversea always includes internet
+            internet_inc, internet_type = True, "premium"
+
+            booking_url = hit.get("bookingUrl") or hit.get("url") or "https://www.silversea.com/de/"
+
+            return CruiseFare(
+                ship=str(ship).strip(),
+                itinerary=str(itinerary).strip(),
+                departure_date=departure_date,
+                duration_nights=nights,
+                cabin_type=cabin_type,
+                price_per_person_eur=price_pp,
+                total_price_eur=price_pp * self.NUM_PASSENGERS,
+                currency="EUR",
+                internet_included=internet_inc,
+                internet_type=internet_type,
+                all_inclusive=True,
+                captains_club_eligible=True,
+                booking_url=str(booking_url),
+                source_url=source_url,
+                raw=hit,
+            )
+        except Exception as exc:
+            logger.debug(f"_parse_algolia_hit failed: {exc}")
+            return None
 
     def _parse_item(self, item: dict, source_url: str) -> Optional[CruiseFare]:
         if not isinstance(item, dict):
@@ -328,7 +398,9 @@ class CelebrityScraper:
             departure_date = _parse_date(dep_raw)
 
             nights = int(item.get("nights") or item.get("duration") or
-                         item.get("numNights") or item.get("durationNights") or 0)
+                         item.get("numNights") or item.get("durationNights") or
+                         item.get("numberOfNights") or item.get("lengthOfStay") or
+                         item.get("voyageDuration") or item.get("tripLength") or 0)
 
             # Price — try balcony price first, then generic
             price_raw = (
@@ -440,9 +512,9 @@ class RoyalCaribbeanScraper(CelebrityScraper):
                     await page.wait_for_load_state("networkidle", timeout=self.timeout)
                 except Exception:
                     pass
-                await asyncio.sleep(self.wait_extra)
+                await asyncio.sleep(self.wait_extra + 5)
                 await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await asyncio.sleep(2)
+                await asyncio.sleep(4)
             except Exception as exc:
                 logger.error(f"[RC] Navigation error: {exc}")
             finally:
