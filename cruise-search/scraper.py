@@ -522,14 +522,14 @@ class RoyalCaribbeanScraper(CelebrityScraper):
             page.on("response", on_response)
             try:
                 logger.info(f"[Royal Caribbean] Lade {self.SEARCH_URL_RC} …")
-                await page.goto(self.SEARCH_URL_RC, wait_until="domcontentloaded", timeout=self.timeout)
+                await page.goto(self.SEARCH_URL_RC, wait_until="domcontentloaded", timeout=self.timeout * 2)
                 try:
                     await page.wait_for_load_state("networkidle", timeout=self.timeout)
                 except Exception:
                     pass
-                await asyncio.sleep(self.wait_extra + 5)
+                await asyncio.sleep(self.wait_extra + 8)
                 await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await asyncio.sleep(4)
+                await asyncio.sleep(5)
             except Exception as exc:
                 logger.error(f"[RC] Navigation error: {exc}")
             finally:
@@ -592,11 +592,15 @@ class SilverseaScraper(CelebrityScraper):
             "x-algolia-api-key": self.ALGOLIA_API_KEY,
             "x-algolia-application-id": self.ALGOLIA_APP_ID,
             "Content-Type": "application/json",
+            "Origin": "https://www.silversea.com",
+            "Referer": "https://www.silversea.com/de/kreuzfahrten.html",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36",
         }
         for index in self.ALGOLIA_INDEXES:
             try:
                 body = {"requests": [{"indexName": index, "params": "hitsPerPage=100&page=0"}]}
                 r = _requests.post(self.ALGOLIA_URL, json=body, headers=headers, timeout=15, verify=False)
+                logger.debug(f"[SS Algolia] {index}: HTTP {r.status_code}")
                 if r.status_code != 200:
                     continue
                 data = r.json()

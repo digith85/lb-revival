@@ -38,8 +38,8 @@
   },
 
   "schedule": {
-    "interval_minutes": 60,
-    "run_on_start": true
+    "interval_minutes": 120,
+    "_note": "120 Minuten Abstand verhindert Rate-Limiting durch die Kreuzfahrt-Websites"
   },
 
   "notification": {
