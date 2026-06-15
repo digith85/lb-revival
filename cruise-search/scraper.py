@@ -150,6 +150,22 @@ class CelebrityScraper:
         """Auto-detect a usable Chromium binary."""
         import glob as _glob
         import shutil
+        import os
+        import sys
+
+        # Windows: %LOCALAPPDATA%\ms-playwright\chromium-*\chrome-win\chrome.exe
+        if sys.platform == "win32":
+            local_app = os.environ.get("LOCALAPPDATA", "")
+            for pattern in [
+                os.path.join(local_app, "ms-playwright", "chromium-*", "chrome-win", "chrome.exe"),
+                os.path.join(local_app, "ms-playwright", "chromium_headless_shell-*", "chrome-headless-shell-win64", "chrome-headless-shell.exe"),
+            ]:
+                hits = sorted(_glob.glob(pattern), reverse=True)
+                if hits:
+                    logger.debug(f"Auto-detected Chromium (Windows): {hits[0]}")
+                    return hits[0]
+
+        # Linux: /opt/pw-browsers/...
         for pattern in [
             "/opt/pw-browsers/chromium-*/chrome-linux/chrome",
             "/opt/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell",
@@ -158,6 +174,8 @@ class CelebrityScraper:
             if hits:
                 logger.debug(f"Auto-detected Chromium: {hits[0]}")
                 return hits[0]
+
+        # System chromium (macOS / Linux)
         for name in ("chromium", "chromium-browser", "google-chrome", "google-chrome-stable"):
             path = shutil.which(name)
             if path:
