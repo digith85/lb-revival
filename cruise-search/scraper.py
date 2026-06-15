@@ -372,7 +372,7 @@ class RoyalCaribbeanScraper(CelebrityScraper):
     Loyalty: Crown & Anchor Society (RCL status-match with Captain's Club).
     """
 
-    SEARCH_URL_RC = "https://www.royalcaribbean.com/de/cruise-ships"
+    SEARCH_URL_RC = "https://www.royalcaribbean.com/de/find-a-cruise"
 
     async def fetch_fares(self) -> list[CruiseFare]:
         captured: list[dict] = []

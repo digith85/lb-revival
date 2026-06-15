@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 class FareFilter:
     """Applies all configured criteria to a CruiseFare and returns whether it passes."""
 
-    # Minimum child age in months (Celebrity Cruises policy)
     MIN_INFANT_AGE_MONTHS_STANDARD = 6
     MIN_INFANT_AGE_MONTHS_TRANSATLANTIC = 12
 
@@ -25,6 +24,7 @@ class FareFilter:
         self.child_dob = self._parse_date(config["passengers"]["children"][0]["dob"])
         self.min_cabin_rank = cabin_rank(config["cabin"]["min_category"])
         self.require_fast_internet = config["internet"]["require_fast"]
+        self.accept_upgradeable = config["internet"].get("accept_upgradeable", True)
         self.departure_from = self._parse_date(config["search"]["departure_date_from"])
         self.departure_to = self._parse_date(config["search"]["departure_date_to"])
         self.min_nights = config["search"].get("min_duration_nights", 0)
@@ -58,7 +58,6 @@ class FareFilter:
                 rejections.append(f"Abfahrt {fare.departure_date} vor {self.departure_from}")
             if self.departure_to and dep > self.departure_to:
                 rejections.append(f"Abfahrt {fare.departure_date} nach {self.departure_to}")
-            # Child minimum age check
             child_age_months = self._months_between(self.child_dob, dep)
             is_transatlantic = any(
                 k in fare.itinerary.lower() for k in self.TRANSATLANTIC_KEYWORDS
@@ -90,6 +89,13 @@ class FareFilter:
             rejections.append("Nicht Captain's Club eligible")
 
         return (len(rejections) == 0, rejections)
+
+    def is_near_miss(self, fare: CruiseFare, rejections: list[str]) -> bool:
+        """True if the only rejection reason is slow internet (upgradeable on the ship)."""
+        if not self.accept_upgradeable:
+            return False
+        internet_only = all("Internet zu langsam" in r for r in rejections)
+        return len(rejections) == 1 and internet_only and fare.internet_included
 
     @staticmethod
     def _parse_date(value: Optional[str]) -> Optional[date]:

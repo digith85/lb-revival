@@ -18,7 +18,8 @@
 
   "internet": {
     "require_fast": true,
-    "_note": "true = nur Tarife mit Stream/Premium-Internet (nicht nur Surf/Basic)"
+    "accept_upgradeable": true,
+    "_note": "require_fast=true: nur stream/premium. accept_upgradeable=true: auch Tarife wo Internet enthalten aber upgradefähig (Classic Wi-Fi), werden als 'Fast-Treffer' angezeigt"
   },
 
   "search": {

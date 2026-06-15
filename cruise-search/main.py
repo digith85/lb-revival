@@ -88,17 +88,31 @@ async def run_search(cfg: dict, discover: bool = False) -> list[CruiseFare]:
 
     fare_filter = FareFilter(cfg)
     matched: list[CruiseFare] = []
+    near_misses: list[tuple[CruiseFare, list[str]]] = []
+
     for fare in fares:
         ok, reasons = fare_filter.passes(fare)
         if ok:
             matched.append(fare)
         else:
             logger.debug(f"Abgelehnt ({fare.ship} {fare.departure_date}): {'; '.join(reasons)}")
+            if fare_filter.is_near_miss(fare, reasons):
+                near_misses.append((fare, reasons))
 
     logger.info(f"Passende Tarife nach Filter: {len(matched)}")
+    if near_misses:
+        logger.info(f"Fast-Treffer (nur Internet-Upgrade nötig): {len(near_misses)}")
 
     notifier = Notifier(cfg)
     notifier.notify(matched, context=f"Suchlauf {ts}")
+
+    if near_misses:
+        print(f"\n{'~' * 60}")
+        print(f"  {len(near_misses)} FAST-TREFFER — Classic Wi-Fi enthalten, Premium-Upgrade moeglich")
+        print(f"{'~' * 60}")
+        for fare, reasons in near_misses:
+            print(fare.summary().replace("Internet:", "Internet (Upgrade auf Premium ~20 EUR/Tag):"))
+        print()
 
     return matched
 
