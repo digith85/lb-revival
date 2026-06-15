@@ -286,6 +286,12 @@ class CelebrityScraper:
         for resp in responses:
             url = resp["url"]
             body = resp["body"]
+
+            if logger.isEnabledFor(logging.DEBUG):
+                # Log first 800 chars of each response body for field inspection
+                preview = json.dumps(body, ensure_ascii=False)[:800]
+                logger.debug(f"[RAW] {url}\n{preview}\n")
+
             parsed = self._try_parse(body, url)
             for fare in parsed:
                 if fare.id not in seen:
