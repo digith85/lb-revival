@@ -16,6 +16,7 @@ import asyncio
 import json
 import logging
 import re
+import requests as _requests
 from datetime import datetime
 from typing import Optional
 from urllib.parse import urlparse
@@ -279,6 +280,10 @@ class CelebrityScraper:
         )
         return any(k in lower for k in keywords)
 
+    # URL fragments that indicate non-cruise API responses
+    _URL_BLOCKLIST = ("promo", "geolocation", "/auth/", "geoip", "token",
+                      "analytics", "tracking", "cookie", "consent")
+
     def _parse_responses(self, responses: list[dict]) -> list[CruiseFare]:
         fares: list[CruiseFare] = []
         seen: set[str] = set()
@@ -287,8 +292,12 @@ class CelebrityScraper:
             url = resp["url"]
             body = resp["body"]
 
+            # Skip non-cruise responses (promos, geo, auth, etc.)
+            if any(b in url.lower() for b in self._URL_BLOCKLIST):
+                logger.debug(f"[SKIP] {url}")
+                continue
+
             if logger.isEnabledFor(logging.DEBUG):
-                # Log first 800 chars of each response body for field inspection
                 preview = json.dumps(body, ensure_ascii=False)[:800]
                 logger.debug(f"[RAW] {url}\n{preview}\n")
 
@@ -554,69 +563,55 @@ class SilverseaScraper(CelebrityScraper):
 
     SEARCH_URL_SS = "https://www.silversea.com/de/kreuzfahrten.html"
 
+    # Algolia credentials visible in Silversea's public network traffic
+    ALGOLIA_APP_ID = "OGG7AV1JSP"
+    ALGOLIA_API_KEY = "4d498c12cbd77b674c5d672621bbad43"
+    ALGOLIA_URL = "https://ogg7av1jsp-dsn.algolia.net/1/indexes/*/queries"
+    # Known Silversea Algolia index names to try
+    ALGOLIA_INDEXES = [
+        "voyages_europe", "voyages_en", "voyages", "Silversea_voyages",
+        "cruises_eu", "sailings_en",
+    ]
+
     async def fetch_fares(self) -> list[CruiseFare]:
-        captured: list[dict] = []
-
-        if not self.executable_path:
-            logger.error("[SS] Kein Chromium gefunden.")
-            return []
-
-        async with async_playwright() as pw:
-            browser = await pw.chromium.launch(
-                headless=self.headless,
-                executable_path=self.executable_path,
-                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
-                      "--ignore-certificate-errors"],
-            )
-            ctx = await browser.new_context(
-                locale="de-DE",
-                user_agent=self.user_agent or None,
-                viewport={"width": 1440, "height": 900},
-                extra_http_headers={"Accept-Language": "de-DE,de;q=0.9"},
-                ignore_https_errors=True,
-            )
-            page = await ctx.new_page()
-
-            async def on_response(resp: Response) -> None:
-                try:
-                    if "json" not in resp.headers.get("content-type", ""):
-                        return
-                    if resp.status != 200:
-                        return
-                    url = resp.url
-                    if self.log_all:
-                        logger.info(f"[SS API] {url}")
-                    if not self._looks_like_cruise_api(url):
-                        return
-                    body = await resp.json()
-                    captured.append({"url": url, "body": body})
-                    logger.debug(f"[Silversea] Captured: {url}")
-                except Exception as exc:
-                    logger.debug(f"[SS] Response error: {exc}")
-
-            page.on("response", on_response)
-            try:
-                logger.info(f"[Silversea] Lade {self.SEARCH_URL_SS} …")
-                await page.goto(self.SEARCH_URL_SS, wait_until="domcontentloaded", timeout=self.timeout)
-                try:
-                    await page.wait_for_load_state("networkidle", timeout=self.timeout)
-                except Exception:
-                    pass
-                await asyncio.sleep(self.wait_extra)
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await asyncio.sleep(2)
-            except Exception as exc:
-                logger.error(f"[SS] Navigation error: {exc}")
-            finally:
-                await browser.close()
-
-        fares = self._parse_responses(captured)
-        # Silversea: all cabins are suites → always meets balcony minimum
+        """Fetch Silversea fares via direct Algolia API call (no browser needed)."""
+        logger.info("[Silversea] Suche via Algolia API …")
+        fares = self._fetch_algolia_direct()
+        if fares:
+            logger.info(f"[Silversea] {len(fares)} Tarife via Algolia gefunden")
+        else:
+            logger.warning("[Silversea] Algolia lieferte keine Treffer")
         for fare in fares:
             if fare.cabin_type in ("INTERIOR", "OCEANVIEW", "INSIDE", ""):
                 fare.cabin_type = "SILVER_SUITE"
-            fare.captains_club_eligible = True  # Venetian Society ↔ Captain's Club status match
+            fare.captains_club_eligible = True
         return fares
+
+    def _fetch_algolia_direct(self) -> list[CruiseFare]:
+        headers = {
+            "x-algolia-api-key": self.ALGOLIA_API_KEY,
+            "x-algolia-application-id": self.ALGOLIA_APP_ID,
+            "Content-Type": "application/json",
+        }
+        for index in self.ALGOLIA_INDEXES:
+            try:
+                body = {"requests": [{"indexName": index, "params": "hitsPerPage=100&page=0"}]}
+                r = _requests.post(self.ALGOLIA_URL, json=body, headers=headers, timeout=15, verify=False)
+                if r.status_code != 200:
+                    continue
+                data = r.json()
+                hits = data.get("results", [{}])[0].get("hits", [])
+                if hits:
+                    logger.info(f"[SS Algolia] Index '{index}': {len(hits)} Treffer")
+                    return [f for h in hits for f in [self._parse_algolia_hit(h, self.ALGOLIA_URL)] if f]
+                nbHits = data.get("results", [{}])[0].get("nbHits", 0)
+                if nbHits > 0:
+                    # Index exists but hitsPerPage was overridden — try with explicit param
+                    body2 = {"requests": [{"indexName": index, "params": f"hitsPerPage=100&page=0&numericFilters="}]}
+                    logger.debug(f"[SS Algolia] Index '{index}' hat {nbHits} Treffer aber hits=[] — überspringe")
+            except Exception as exc:
+                logger.debug(f"[SS Algolia] {index}: {exc}")
+        return []
 
     @staticmethod
     def _looks_like_cruise_api(url: str) -> bool:
